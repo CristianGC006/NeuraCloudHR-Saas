@@ -9,7 +9,7 @@ import {
   AlertCircle,
   Save,
 } from 'lucide-react';
-import { PageHeader, SectionCard, DemoBanner } from '../components/ui/Cards';
+import { PageHeader, SectionCard } from '../components/ui/Cards';
 import Modal from '../components/ui/Modal';
 import { type Department, type Position } from '../data/demoData';
 import {
@@ -249,7 +249,6 @@ export default function Organizacion() {
           )
         }
       />
-      <DemoBanner />
 
       {notice && (
         <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 flex items-center justify-between">

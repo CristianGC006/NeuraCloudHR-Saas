@@ -27,7 +27,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { StatCard, PageHeader, SectionCard, DemoBanner } from '../components/ui/Cards';
+import { StatCard, PageHeader, SectionCard } from '../components/ui/Cards';
 import {
   formatCurrency,
   formatDate,
@@ -199,7 +199,6 @@ export default function Dashboard() {
           </div>
         }
       />
-      <DemoBanner />
 
       {/* Important Alerts Banner if any */}
       {alerts.length > 0 && (

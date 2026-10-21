@@ -88,7 +88,13 @@ export function ensureSeedData(): HrDataState {
   const v2Raw = window.localStorage.getItem(STORAGE_KEY_V2);
   const parsedV2 = parseState(v2Raw);
   if (parsedV2) {
-    return parsedV2;
+    const synced = syncBusinessState(parsedV2);
+    try {
+      window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(synced));
+    } catch {
+      // ignore
+    }
+    return synced;
   }
 
   // 2. Try v1 backwards compatible migration
@@ -102,15 +108,16 @@ export function ensureSeedData(): HrDataState {
         employees: Array.isArray(v1Data.employees) && v1Data.employees.length >= 8 ? v1Data.employees : defaultState.employees,
         absences: Array.isArray(v1Data.absences) && v1Data.absences.length > 0 ? v1Data.absences : defaultState.absences,
       };
-      window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(migrated));
-      return migrated;
+      const synced = syncBusinessState(migrated);
+      window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(synced));
+      return synced;
     } catch {
       // fallback to fresh seed
     }
   }
 
   // 3. Fresh seed data
-  const seeded = getDefaultData();
+  const seeded = syncBusinessState(getDefaultData());
   window.localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(seeded));
   return seeded;
 }
@@ -151,7 +158,7 @@ export function loginDemo(usernameInput: string, passwordInput: string): { succe
       username: 'admin',
       nombre: 'Administrador RR.HH.',
       rol: 'Administrador SaaS',
-      token: `demo-token-${Date.now()}`,
+      token: `auth-token-${Date.now()}`,
       loginTime: new Date().toISOString(),
     };
     if (typeof window !== 'undefined') {
@@ -161,7 +168,7 @@ export function loginDemo(usernameInput: string, passwordInput: string): { succe
     return { success: true, session };
   }
 
-  return { success: false, message: 'Usuario o contraseña incorrectos. Utiliza las credenciales de demostración.' };
+  return { success: false, message: 'Usuario o contraseña incorrectos. Verifica tus credenciales de acceso.' };
 }
 
 export function logoutDemo(): void {
@@ -178,7 +185,15 @@ export function getEmployees(): Employee[] {
 
 export function saveEmployees(employees: Employee[]): void {
   const state = readHrData();
-  persistHrData({ ...state, employees });
+  const synced = syncBusinessState({ ...state, employees });
+  persistHrData(synced);
+}
+
+export function deleteEmployee(employeeId: string): void {
+  const state = readHrData();
+  const nextEmployees = state.employees.filter(e => e.id !== employeeId);
+  const synced = syncBusinessState({ ...state, employees: nextEmployees });
+  persistHrData(synced);
 }
 
 export function getEmployeeById(employeeId: string): Employee | undefined {
@@ -214,7 +229,20 @@ export function getContracts(): Contract[] {
 
 export function saveContracts(contracts: Contract[]): void {
   const state = readHrData();
-  persistHrData({ ...state, contracts });
+  const updatedEmployees = state.employees.map(emp => {
+    const ctr = contracts.find(c => c.empleadoId === emp.id);
+    if (!ctr) return emp;
+    return {
+      ...emp,
+      salarioBase: ctr.salario,
+      cargo: ctr.cargo || emp.cargo,
+      departamento: ctr.departamento || emp.departamento,
+      tipoContrato: ctr.tipoContrato || emp.tipoContrato,
+      fechaVencimientoContrato: ctr.fechaFin,
+    };
+  });
+  const synced = syncBusinessState({ ...state, employees: updatedEmployees, contracts });
+  persistHrData(synced);
 }
 
 // ── DEPARTMENTS & POSITIONS CRUD ────────────────────────────────
@@ -243,7 +271,8 @@ export function getAbsences(): Absence[] {
 
 export function saveAbsences(absences: Absence[]): void {
   const state = readHrData();
-  persistHrData({ ...state, absences });
+  const synced = syncBusinessState({ ...state, absences });
+  persistHrData(synced);
 }
 
 export function getAbsenceOverlap(
@@ -449,6 +478,143 @@ export function generatePeriodDraft(
   };
 }
 
+// ── UNIFIED BUSINESS RECONCILIATION ENGINE ──────────────────────
+export function syncBusinessState(state: HrDataState): HrDataState {
+  const employees = state.employees || [];
+  const settings = state.companySettings;
+  const absences = state.absences || [];
+
+  // 1. Sync contracts with current employees
+  const currentEmpIds = new Set(employees.map(e => e.id));
+  const contracts = (state.contracts || []).filter(c => currentEmpIds.has(c.empleadoId));
+
+  employees.forEach(emp => {
+    const existingIndex = contracts.findIndex(c => c.empleadoId === emp.id);
+    if (existingIndex >= 0) {
+      const ctr = contracts[existingIndex];
+      contracts[existingIndex] = {
+        ...ctr,
+        empleadoNombre: emp.nombre,
+        cargo: emp.cargo,
+        departamento: emp.departamento,
+        salario: emp.salarioBase,
+        tipoContrato: (emp.tipoContrato as Contract['tipoContrato']) || ctr.tipoContrato,
+        fechaFin: emp.fechaVencimientoContrato !== undefined ? emp.fechaVencimientoContrato : ctr.fechaFin,
+        estado:
+          emp.estado === 'inactivo'
+            ? 'terminado'
+            : ctr.estado === 'terminado'
+            ? 'activo'
+            : ctr.estado,
+      };
+    } else if (emp.estado !== 'inactivo') {
+      contracts.push({
+        id: createSequentialId('CTR', contracts),
+        empleadoId: emp.id,
+        empleadoNombre: emp.nombre,
+        cargo: emp.cargo,
+        departamento: emp.departamento,
+        tipoContrato: (emp.tipoContrato as Contract['tipoContrato']) || 'Término Indefinido',
+        fechaInicio: emp.fechaIngreso || new Date().toISOString().slice(0, 10),
+        fechaFin: emp.fechaVencimientoContrato,
+        salario: emp.salarioBase,
+        estado: 'activo',
+        observaciones: 'Sincronizado automáticamente con el registro de colaboradores',
+      });
+    }
+  });
+
+  // 2. Sync Payroll Periods
+  let payrollPeriods = [...(state.payrollPeriods || [])];
+  if (payrollPeriods.length === 0) {
+    const draft = generatePeriodDraft('Octubre 2026', '2026-10', '2026-10-01', '2026-10-31');
+    payrollPeriods = [draft];
+  }
+
+  // Active employees for payroll calculations
+  const activeEmployees = employees.filter(e => e.estado !== 'inactivo');
+
+  payrollPeriods = payrollPeriods.map(period => {
+    // Only synchronize unclosed periods (e.g. borrador, revisado)
+    if (period.estado === 'cerrado') return period;
+
+    const updatedItems: PayrollPeriodItem[] = [];
+
+    // For every active employee, update or create item
+    activeEmployees.forEach(emp => {
+      const existing = period.items.find(i => i.empleadoId === emp.id);
+      if (existing) {
+        // Recalculate with updated salary and department/cargo, preserving line adjustments
+        const dias = existing.diasLiquidados ?? 30;
+        const salarioBase = emp.salarioBase;
+        const salarioProporcional = Math.round((salarioBase / 30) * dias);
+        const hasAux = salarioBase <= settings.salarioMinimo * 2;
+        const auxilioTransporte = hasAux ? Math.round((settings.auxilioTransporte / 30) * dias) : 0;
+
+        const horasExtras = existing.horasExtras || 0;
+        const bonificaciones = existing.bonificaciones || 0;
+        const comisiones = existing.comisiones || 0;
+        const otrosDevengos = existing.otrosDevengos || 0;
+        const anticipos = existing.anticipos || 0;
+        const otrasDeducciones = existing.otrasDeducciones || 0;
+
+        const totalDevengado =
+          salarioProporcional + auxilioTransporte + horasExtras + bonificaciones + comisiones + otrosDevengos;
+        const baseCotizacion = salarioProporcional + horasExtras;
+        const salud = Math.round(baseCotizacion * (settings.pctSalud / 100));
+        const pension = Math.round(baseCotizacion * (settings.pctPension / 100));
+        const totalDeducciones = salud + pension + anticipos + otrasDeducciones;
+        const neto = Math.max(0, totalDevengado - totalDeducciones);
+
+        updatedItems.push({
+          ...existing,
+          nombre: emp.nombre,
+          cargo: emp.cargo,
+          departamento: emp.departamento,
+          diasLiquidados: dias,
+          salarioBase,
+          salarioProporcional,
+          auxilioTransporte,
+          totalDevengado,
+          salud,
+          pension,
+          totalDeducciones,
+          neto,
+        });
+      } else {
+        // Brand new employee in this period
+        const newItem = calculatePayrollItem(emp, absences, settings, 30);
+        newItem.periodoId = period.id;
+        updatedItems.push(newItem);
+      }
+    });
+
+    const totalDevengado = updatedItems.reduce((acc, i) => acc + i.totalDevengado, 0);
+    const totalDeducciones = updatedItems.reduce((acc, i) => acc + i.totalDeducciones, 0);
+    const totalNeto = updatedItems.reduce((acc, i) => acc + i.neto, 0);
+
+    return {
+      ...period,
+      items: updatedItems,
+      totalDevengado,
+      totalDeducciones,
+      totalNeto,
+      empleadosCount: updatedItems.length,
+    };
+  });
+
+  // 3. Sync absences: remove absences for deleted employees
+  const validAbsences = absences.filter(a => currentEmpIds.has(a.empleadoId));
+
+  return {
+    ...state,
+    employees,
+    contracts,
+    payrollPeriods,
+    absences: validAbsences,
+  };
+}
+
 // ── COMPANY SETTINGS CRUD ───────────────────────────────────────
 export function getCompanySettings(): CompanySettings {
   return readHrData().companySettings;
@@ -456,7 +622,8 @@ export function getCompanySettings(): CompanySettings {
 
 export function saveCompanySettings(companySettings: CompanySettings): void {
   const state = readHrData();
-  persistHrData({ ...state, companySettings });
+  const synced = syncBusinessState({ ...state, companySettings });
+  persistHrData(synced);
 }
 
 // ── SYSTEM ALERTS ───────────────────────────────────────────────

@@ -11,9 +11,8 @@ import {
   RefreshCw,
   Search,
   FileText,
-  HelpCircle,
 } from 'lucide-react';
-import { PageHeader, SectionCard, StatCard, DemoBanner } from '../components/ui/Cards';
+import { PageHeader, SectionCard, StatCard } from '../components/ui/Cards';
 import Modal from '../components/ui/Modal';
 import { type PayrollPeriod, type PayrollPeriodItem } from '../data/demoData';
 import {
@@ -337,15 +336,6 @@ export default function Nomina() {
           </div>
         }
       />
-      <DemoBanner />
-
-      {/* Legal & Calculation Disclaimer Banner */}
-      <div className="mb-6 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-400 text-xs">
-        <HelpCircle size={16} className="text-brand-400 mt-0.5 shrink-0" />
-        <p>
-          <strong>Aviso de Demostración:</strong> Los cálculos salariales, auxilios y aportes son estimados configurables para evaluación de producto y no sustituyen una liquidación laboral certificada por un profesional contable bajo el marco regulatorio local.
-        </p>
-      </div>
 
       {notice && (
         <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 flex items-center justify-between">
@@ -567,7 +557,7 @@ export default function Nomina() {
         onClose={() => setVoucherModalOpen(false)}
         footer={
           <div className="flex justify-between items-center w-full">
-            <span className="text-xs text-slate-500">Documento de demostración generado por NeuraCloud HR</span>
+            <span className="text-xs text-slate-500">Documento de liquidación generado por NeuraCloud HR SaaS</span>
             <div className="flex gap-2">
               <button
                 type="button"

@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-import { PageHeader, SectionCard, DemoBanner } from '../components/ui/Cards';
+import { PageHeader, SectionCard } from '../components/ui/Cards';
 import { DataTable } from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import { type Contract } from '../data/demoData';
@@ -281,7 +281,6 @@ export default function Contratos() {
           </>
         }
       />
-      <DemoBanner />
 
       {notice && (
         <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">

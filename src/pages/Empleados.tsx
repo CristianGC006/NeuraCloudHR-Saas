@@ -16,7 +16,7 @@ import {
   PhoneCall,
   Shield,
 } from 'lucide-react';
-import { PageHeader, SectionCard, DemoBanner } from '../components/ui/Cards';
+import { PageHeader, SectionCard } from '../components/ui/Cards';
 import { Avatar } from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
 import { type Employee } from '../data/demoData';
@@ -25,14 +25,12 @@ import {
   exportCsv,
   formatCurrency,
   formatDate,
-  getAbsences,
-  getContracts,
   getDepartments,
   getEmployees,
-  getPayrollPeriods,
   getPositions,
   initialsFromName,
   saveEmployees,
+  deleteEmployee,
 } from '../data/hrStore';
 
 type FormTab = 'personal' | 'laboral' | 'contacto' | 'administrativo';
@@ -363,20 +361,13 @@ export default function Empleados() {
   };
 
   const handleDeleteEmployee = (emp: Employee) => {
-    const relatedContracts = getContracts().some(c => c.empleadoId === emp.id);
-    const relatedAbsences = getAbsences().some(a => a.empleadoId === emp.id);
-    const relatedPayroll = getPayrollPeriods().some(p => p.items.some(i => i.empleadoId === emp.id));
-
-    if (relatedContracts || relatedAbsences || relatedPayroll) {
-      setNotice(
-        `No se puede eliminar al empleado "${emp.nombre}" porque tiene contratos, nóminas o ausencias históricas asociadas. Puedes cambiar su estado a "Inactivo" en su lugar.`,
-      );
-      return;
-    }
-
-    if (window.confirm(`¿Confirmas eliminar permanentemente a ${emp.nombre} (${emp.id})?`)) {
-      saveEmployees(employees.filter(e => e.id !== emp.id));
-      setNotice(`Empleado ${emp.nombre} eliminado.`);
+    if (
+      window.confirm(
+        `¿Confirmas eliminar a ${emp.nombre} (${emp.id}) del sistema? Se actualizarán automáticamente la nómina activa y las métricas del dashboard.`,
+      )
+    ) {
+      deleteEmployee(emp.id);
+      setNotice(`Empleado "${emp.nombre}" eliminado exitosamente. Nómina estimada y métricas recalculadas.`);
     }
   };
 
@@ -416,7 +407,6 @@ export default function Empleados() {
           </>
         }
       />
-      <DemoBanner />
 
       {notice && (
         <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 flex items-center justify-between">

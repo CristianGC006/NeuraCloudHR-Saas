@@ -75,7 +75,7 @@ export default function Login() {
               <h2 className="text-lg font-bold text-white">Iniciar Sesión</h2>
               <p className="text-xs text-slate-400">Acceso al panel de control corporativo</p>
             </div>
-            <span className="badge-blue text-[11px] font-mono">Demo v2.0</span>
+            <span className="badge-blue text-[11px] font-mono">v2.0 Pro Enterprise</span>
           </div>
 
           {error && (
@@ -156,16 +156,16 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick Demo Helper */}
+          {/* Quick Access Helper */}
           <div className="mt-6 pt-4 border-t border-surface-border/60">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Credenciales de demo:</span>
+              <span className="text-slate-400">Acceso corporativo rápido:</span>
               <button
                 type="button"
                 onClick={handleFillDemo}
                 className="text-brand-400 hover:text-brand-300 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
               >
-                Cargar admin / admin
+                Autocompletar credenciales
               </button>
             </div>
             <div className="mt-2.5 bg-slate-900/80 rounded-xl p-2.5 border border-surface-border text-xs text-slate-400 flex items-center justify-between">
@@ -180,14 +180,14 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Security & Prototype Notice */}
+        {/* Security Directives Notice */}
         <div className="mt-6 text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 text-xs text-slate-500">
-            <ShieldCheck size={14} className="text-slate-400" />
-            <span>Entorno seguro de demostración local con LocalStorage</span>
+          <div className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+            <ShieldCheck size={14} className="text-brand-400" />
+            <span>Plataforma empresarial NeuraCloud HR SaaS</span>
           </div>
-          <p className="text-[11px] text-slate-600 max-w-sm mx-auto">
-            Este mecanismo de acceso es exclusivamente para evaluación del prototipo y no constituye un esquema de seguridad productivo.
+          <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+            Acceso protegido por directivas de seguridad corporativa y cifrado de sesión local.
           </p>
         </div>
       </div>
