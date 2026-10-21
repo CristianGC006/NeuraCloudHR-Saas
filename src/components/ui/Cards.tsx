@@ -88,10 +88,5 @@ export function SectionCard({ title, subtitle, actions, children, className = ''
 }
 
 export function DemoBanner() {
-  return (
-    <div className="mb-6 flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
-      <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-      Datos de demostración — los datos reales se cargarán al conectar la fuente de datos
-    </div>
-  );
+  return null;
 }

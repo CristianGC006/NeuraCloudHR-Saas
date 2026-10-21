@@ -9,7 +9,7 @@ import {
   FileCheck,
   ShieldAlert,
 } from 'lucide-react';
-import { PageHeader, SectionCard, DemoBanner } from '../components/ui/Cards';
+import { PageHeader, SectionCard } from '../components/ui/Cards';
 import Modal from '../components/ui/Modal';
 import { type CompanySettings } from '../data/demoData';
 import {
@@ -100,7 +100,7 @@ export default function Configuracion() {
   const confirmResetSeed = () => {
     resetToSeedData();
     setRestoreModalOpen(false);
-    setNotice('Se han restaurado los datos semilla de demostración originales exitosamente.');
+    setNotice('Se han restaurado los datos predeterminados del sistema exitosamente.');
   };
 
   return (
@@ -109,7 +109,6 @@ export default function Configuracion() {
         title="Configuración del Sistema"
         subtitle="Identidad corporativa, parámetros legales de nómina y gestión de copias de seguridad"
       />
-      <DemoBanner />
 
       {notice && (
         <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 flex items-center justify-between">
@@ -210,7 +209,7 @@ export default function Configuracion() {
 
         {/* Section 2: Parámetros de Nómina */}
         <SectionCard
-          title="Parámetros de Liquidación de Demostración"
+          title="Parámetros Legales de Liquidación"
           subtitle="Valores legales de referencia utilizados para el cálculo de auxilio de transporte y aportes"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -370,10 +369,10 @@ export default function Configuracion() {
               <div>
                 <div className="flex items-center gap-2.5 text-amber-400 mb-2">
                   <RotateCcw size={20} />
-                  <h4 className="font-bold text-white text-sm">Restaurar Datos Semilla</h4>
+                  <h4 className="font-bold text-white text-sm">Restaurar Datos Predeterminados</h4>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Reinicia la plataforma con los 10 empleados de demostración, 10 contratos, novedades y nóminas iniciales de prueba.
+                  Reinicia la plataforma con la base corporativa predeterminada de colaboradores, contratos, novedades y nóminas.
                 </p>
               </div>
               <div className="mt-4 pt-3 border-t border-surface-border">
@@ -382,7 +381,7 @@ export default function Configuracion() {
                   onClick={() => setRestoreModalOpen(true)}
                   className="btn-secondary w-full justify-center text-xs text-amber-300 hover:text-amber-200"
                 >
-                  <RotateCcw size={14} /> Reiniciar a Demo Inicial
+                  <RotateCcw size={14} /> Restaurar Base Predeterminada
                 </button>
               </div>
             </div>
@@ -393,7 +392,7 @@ export default function Configuracion() {
       {/* Confirmation Modal: Reset Seed Data */}
       <Modal
         open={restoreModalOpen}
-        title="¿Restaurar datos semilla iniciales?"
+        title="¿Restaurar datos predeterminados?"
         onClose={() => setRestoreModalOpen(false)}
         footer={
           <div className="flex justify-end gap-2">
@@ -405,7 +404,7 @@ export default function Configuracion() {
               className="btn-primary bg-amber-600 hover:bg-amber-500 text-white"
               onClick={confirmResetSeed}
             >
-              <RotateCcw size={14} /> Sí, Restaurar Datos Iniciales
+              <RotateCcw size={14} /> Sí, Restaurar Datos Predeterminados
             </button>
           </div>
         }
@@ -416,7 +415,7 @@ export default function Configuracion() {
             <div>
               <p className="font-bold">Advertencia importante</p>
               <p className="mt-1">
-                Esta acción sobrescribirá todos los empleados, contratos, ausencias y períodos de nómina que hayas creado o editado en este navegador, restaurando el conjunto predeterminado de demostración.
+                Esta acción sobrescribirá todos los empleados, contratos, ausencias y períodos de nómina que hayas creado o editado en este navegador, restaurando el conjunto predeterminado del sistema.
               </p>
             </div>
           </div>
